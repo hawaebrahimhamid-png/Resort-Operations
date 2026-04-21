@@ -1,14 +1,15 @@
 import jwt from "jsonwebtoken";
 
+// ✅ AUTH
 export const authMiddleware = (req, res, next) => {
-   console.log("SECRET:", process.env.JWT_SECRET);
-    const authHeader = req.headers.authorization;
+  console.log("SECRET:", process.env.JWT_SECRET);
 
+  const authHeader = req.headers.authorization;
+console.log("AUTH HEADER:", req.headers.authorization);
   if (!authHeader) {
     return res.status(401).json({ error: "No token" });
   }
 
-  // ✅ Check format
   if (!authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Invalid token format" });
   }
@@ -20,10 +21,12 @@ export const authMiddleware = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
-    res.status(401).json({ error: "Invalid token" });
+    console.log("JWT ERROR:", error.message);
+    return res.status(401).json({ error: "Invalid token" });
   }
 };
-// ✅ ROLE CHECK (manager only)
+
+// ✅ ROLE CHECK
 export const isManager = (req, res, next) => {
   if (req.user.role !== "manager") {
     return res.status(403).json({ error: "Access denied" });
