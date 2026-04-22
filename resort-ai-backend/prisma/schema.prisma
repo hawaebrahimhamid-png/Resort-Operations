@@ -4,13 +4,99 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-   url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
+/////////////////////
+// ENUMS (NEW)
+/////////////////////
+
+enum Role {
+  staff
+  manager
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+}
+
+enum Condition {
+  good
+  bad
+  maintenance
+}
+
+enum InventoryStatus {
+  available
+  out_of_stock
+}
+
+/////////////////////
+// USER
+/////////////////////
+
 model User {
-  id       Int    @id @default(autoincrement())
-  name     String
-  email    String @unique
-  password String
-  role     String @default("staff")
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(staff)
+  createdAt DateTime @default(now())
+
+  bookings  Booking[]
+  inventory Inventory[]
+  equipment Equipment[]
+}
+
+/////////////////////
+// BOOKING
+/////////////////////
+
+model Booking {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  guestName String
+  roomType  String
+  checkIn   DateTime
+  checkOut  DateTime
+  status    BookingStatus @default(pending)
+
+  createdAt DateTime @default(now())
+}
+
+/////////////////////
+// INVENTORY
+/////////////////////
+
+model Inventory {
+  id        String          @id @default(cuid())
+  name      String
+  quantity  Int
+  price     Float
+  status    InventoryStatus @default(available)
+
+  addedById String?
+  addedBy   User? @relation(fields: [addedById], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+/////////////////////
+// EQUIPMENT
+/////////////////////
+
+model Equipment {
+  id          String     @id @default(cuid())
+  name        String
+  condition   Condition  @default(good)
+  location    String?
+
+  managedById String?
+  managedBy   User? @relation(fields: [managedById], references: [id])
+
+  createdAt DateTime @default(now())
 }
