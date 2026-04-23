@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
+import bookingRoutes from "./routes/booking.js";
 import authRoutes from "./routes/auth.js";
 import { authMiddleware, isManager } from "./middleware/auth.js";
 
@@ -14,10 +15,9 @@ app.use(express.json());
 
 // routes
 app.use("/auth", authRoutes);
+app.use("/bookings", bookingRoutes);
 
-// ✅ PROTECTED ROUTES (PUT HERE 👇)
-
-// 🧪 TEST ROUTE (ALL USERS)
+// dashboard
 app.get("/dashboard", authMiddleware, (req, res) => {
   res.json({
     message: "Welcome",
@@ -25,12 +25,11 @@ app.get("/dashboard", authMiddleware, (req, res) => {
   });
 });
 
-// Only manager
+// admin
 app.get("/admin", authMiddleware, isManager, (req, res) => {
   res.json({ message: "Welcome manager" });
 });
 
-// start server
 app.listen(5000, () => {
   console.log("Server running on port 5000");
 });

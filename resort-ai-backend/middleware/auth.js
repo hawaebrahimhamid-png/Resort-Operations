@@ -1,35 +1,42 @@
 import jwt from "jsonwebtoken";
+import { PrismaClient } from "@prisma/client";
 
-// ✅ AUTH
-export const authMiddleware = (req, res, next) => {
-  console.log("SECRET:", process.env.JWT_SECRET);
+const prisma = new PrismaClient();
 
-  const authHeader = req.headers.authorization;
-console.log("AUTH HEADER:", req.headers.authorization);
-  if (!authHeader) {
-    return res.status(401).json({ error: "No token" });
-  }
-
-  if (!authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Invalid token format" });
-  }
-
-  const token = authHeader.split(" ")[1];
-
+// 🔐 AUTH MIDDLEWARE
+export const authMiddleware = async (req, res, next) => {
   try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "No token" });
+    }
+
+    const token = authHeader.split(" ")[1];
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+    });
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    req.user = user;
+
     next();
-  } catch (error) {
-    console.log("JWT ERROR:", error.message);
-    return res.status(401).json({ error: "Invalid token" });
+  } catch (err) {
+    res.status(401).json({ message: "Invalid token" });
   }
 };
 
-// ✅ ROLE CHECK
+// 👑 ROLE CHECK (MANAGER ONLY)
 export const isManager = (req, res, next) => {
   if (req.user.role !== "manager") {
-    return res.status(403).json({ error: "Access denied" });
+    return res.status(403).json({ message: "Manager only access" });
   }
+
   next();
 };
